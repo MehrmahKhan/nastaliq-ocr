@@ -1,0 +1,80 @@
+stages:
+  ingest:
+    cmd: python -m nastaliqops.data.download
+    deps:
+      - src/nastaliqops/data/download.py
+    params:
+      - data.hf_dataset
+      - data.subset_size
+      - data.seed
+    outs:
+      - data/raw
+
+  validate:
+    cmd: python -m nastaliqops.data.validate
+    deps:
+      - data/raw
+      - src/nastaliqops/data/validate.py
+      - src/nastaliqops/data/schema.py
+    outs:
+      - reports/data_validation.json:
+          cache: false
+
+  preprocess:
+    cmd: python -m nastaliqops.data.preprocess
+    deps:
+      - data/raw
+      - reports/data_validation.json
+      - src/nastaliqops/data/preprocess.py
+    params:
+      - data.image_height
+      - data.max_width
+    outs:
+      - data/processed
+
+  split:
+    cmd: python -m nastaliqops.data.split
+    deps:
+      - data/processed
+      - src/nastaliqops/data/split.py
+    params:
+      - data.splits
+      - data.seed
+    outs:
+      - data/splits
+
+  train:
+    cmd: python -m nastaliqops.models.train_lora
+    deps:
+      - data/splits
+      - src/nastaliqops/models/train_lora.py
+    params:
+      - model
+      - train
+    outs:
+      - artifacts/adapter
+
+  evaluate:
+    cmd: python -m nastaliqops.models.evaluate
+    deps:
+      - artifacts/adapter
+      - data/splits
+      - src/nastaliqops/models/evaluate.py
+    metrics:
+      - reports/metrics.json:
+          cache: false
+
+  drift:
+    cmd: python -m nastaliqops.monitoring.drift
+    deps:
+      - data/splits
+      - data/processed
+      - src/nastaliqops/monitoring/drift.py
+      - src/nastaliqops/monitoring/features.py
+    metrics:
+      - reports/drift.json:
+          cache: false
+    outs:
+      # cached by dvc rather than committed, the evidently html embeds its
+      # own javascript and runs to several megabytes per run
+      - reports/drift_report.html
