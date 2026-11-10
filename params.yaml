@@ -1,0 +1,50 @@
+# configs for every stage. dvc repro reads this file, and every script
+# also logs these values to mlflow so a run can be traced back to its config.
+
+data:
+  hf_dataset: "abdur75648/UTRSet-Real"
+  subset_size: 1500          # keep it small, CPU laptop + free colab. raise
+                             # it once a full run works end to end.
+  image_height: 64
+  max_width: 1024
+  seed: 42
+  splits:
+    train: 0.70
+    val: 0.10
+    golden: 0.10             # frozen test set, never trained on
+    stream: 0.10             # pretend live uploads, used for drift + review queue
+
+model:
+  base_checkpoint: "cxfajar197/urdu-ocr"
+  max_target_length: 96
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: ["query", "value"]
+
+train:
+  epochs: 3
+  batch_size: 8
+  learning_rate: 0.00005
+  warmup_steps: 100
+  fp16: true
+  eval_steps: 500
+
+promotion:
+  metric: "cer"
+  max_cer: 0.30              # a challenger must be at least this good
+  min_improvement: 0.01      # and must beat champion by this much
+
+llm:
+  provider: "groq"           # groq | gemini | ollama
+  model: "llama-3.3-70b-versatile"
+  corrector_prompt: "prompts/corrector_v1.yaml"
+  judge_prompt: "prompts/judge_v1.yaml"
+  temperature: 0.0
+
+router:
+  # below this the small model is not trusted and the LLM corrector is called
+  confidence_threshold: 0.72
+  # below this nothing is trusted and the line goes to the human review queue
+  review_threshold: 0.45

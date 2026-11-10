@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.DS_Store
+
+# dvc tracks these, git must not
+/data
+/artifacts
+/mlruns
+/mlartifacts
+/reports/drift_report.html
+*.pth
+*.safetensors
+
+# onedrive and editor noise. .vscode/settings.json is kept on purpose, it
+# sets PYTHONPATH so imports resolve without retyping it every terminal.
+.vscode/*
+!.vscode/settings.json
+desktop.ini
+Thumbs.db
+
+.pytest_cache/
+.dvc/tmp
+.dvc/cache

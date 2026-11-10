@@ -1,0 +1,46 @@
+# Full install: Colab and the Docker images. On a laptop short of disk use
+# requirements-local.txt instead, which leaves out the model stack.
+#
+# Python 3.11 or 3.12 is the safest choice. The data stack uses lower bounds
+# rather than exact pins because pinning datasets and pyarrow to old exact
+# versions makes pip build pyarrow from source on newer Pythons.
+
+torch==2.4.0
+torchvision==0.19.0
+transformers==4.45.2
+peft==0.13.2
+accelerate==1.0.1
+sentencepiece==0.2.0
+
+datasets>=3.2
+pyarrow>=18
+pillow>=10.4
+opencv-python-headless>=4.10
+numpy>=1.26,<2.0
+pandas>=2.2,<3.0
+pyyaml>=6.0
+jiwer>=3.0
+evaluate>=0.4.3
+
+mlflow>=2.17
+dvc>=3.55
+dvc-s3>=3.2
+pandera>=0.20
+
+fastapi==0.115.2
+uvicorn[standard]==0.31.1
+python-multipart==0.0.12
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+langgraph==0.2.35
+langchain-core==0.3.10
+openai==1.51.2
+langfuse==2.52.0
+
+# evidently still imports pandas.core.dtypes.common.infer_dtype_from_object,
+# which pandas 3.0 removed, hence the pandas upper bound above
+evidently>=0.4.40
+prometheus-fastapi-instrumentator>=7.0
+boto3>=1.35
+pytest>=8.3

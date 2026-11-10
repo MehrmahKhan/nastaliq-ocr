@@ -1,0 +1,38 @@
+# Lean install for a laptop with little disk space.
+#
+# Enough to run the data stages (ingest, validate, preprocess, split), push
+# to the DagsHub/DVC remote, browse MLflow and run the registry gate. It
+# deliberately leaves out torch, transformers and peft, which are the heavy
+# packages: training and evaluation run on Colab, the API runs on EC2.
+#
+#   pip install -r requirements-local.txt
+#
+# Use the full requirements.txt on Colab and inside the Docker images.
+#
+# Lower bounds rather than exact pins on the data stack, because pinning
+# datasets and pyarrow to an exact old version makes pip try to build
+# pyarrow from source on newer Pythons, which fails. Python 3.11 or 3.12 is
+# the safest choice, but this resolves on 3.13 too.
+
+datasets>=3.2
+pyarrow>=18
+pillow>=10.4
+opencv-python-headless>=4.10
+numpy>=1.26
+pandas>=2.2,<3.0
+pyyaml>=6.0
+
+pandera>=0.20
+# upper bound on pandas is not optional: evidently still imports
+# pandas.core.dtypes.common.infer_dtype_from_object, which pandas 3.0 removed
+evidently>=0.4.40
+
+mlflow>=2.17
+dvc>=3.55
+dvc-s3>=3.2
+
+# the llm corrector needs nothing heavy, so it can be tested locally
+openai>=1.51
+requests>=2.32
+
+pytest>=8.3

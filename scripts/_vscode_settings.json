@@ -1,0 +1,12 @@
+{
+  "python.analysis.extraPaths": ["src"],
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "terminal.integrated.env.windows": { "PYTHONPATH": "src" },
+  "terminal.integrated.env.linux": { "PYTHONPATH": "src" },
+  "terminal.integrated.env.osx": { "PYTHONPATH": "src" },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true
+  }
+}
