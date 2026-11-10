@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NastaliqOps</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --line: #2a2f3a;
+    --text: #e7e9ee;
+    --muted: #949cad;
+    --accent: #5b8cff;
+    --good: #3ecf8e;
+    --warn: #ffb547;
+    --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 15px;
+  }
+  header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: 0.2px; }
+  header .tag {
+    font-size: 12px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .stat .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .stat .v { font-size: 22px; font-weight: 600; margin-top: 6px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tabs button {
+    background: var(--panel); color: var(--muted); border: 1px solid var(--line);
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;
+  }
+  .tabs button.active { color: var(--text); border-color: var(--accent); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+  .drop {
+    border: 1px dashed var(--line); border-radius: 10px; padding: 36px;
+    text-align: center; color: var(--muted); cursor: pointer; transition: 0.15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); color: var(--text); }
+  .urdu {
+    font-family: "Noto Nastaliq Urdu", serif;
+    direction: rtl; text-align: right;
+    font-size: 24px; line-height: 2.4;
+  }
+  .result { margin-top: 20px; display: none; }
+  .result.show { display: block; }
+  .preview { max-width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; margin-bottom: 14px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.good { color: var(--good); border-color: #205c43; }
+  .chip.warn { color: var(--warn); border-color: #6b4d18; }
+  .chip.bad { color: var(--bad); border-color: #6b2828; }
+  .bar { height: 6px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+  .bar span { display: block; height: 100%; background: var(--accent); }
+  .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  textarea {
+    width: 100%; background: #10131a; color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+    font-family: "Noto Nastaliq Urdu", serif; direction: rtl; text-align: right;
+    font-size: 20px; line-height: 2.2; resize: vertical; min-height: 80px;
+  }
+  button.primary {
+    background: var(--accent); color: #0b0e14; border: 0; border-radius: 8px;
+    padding: 9px 18px; font-weight: 600; cursor: pointer; margin-top: 10px;
+  }
+  .empty { color: var(--muted); text-align: center; padding: 40px; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NastaliqOps</h1>
+  <span class="tag">Urdu OCR with a human in the loop</span>
+  <span class="tag" id="variant">model: loading</span>
+</header>
+
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+
+  <div class="tabs">
+    <button class="active" data-tab="upload">Read an image</button>
+    <button data-tab="review">Review queue</button>
+  </div>
+
+  <div class="panel" id="tab-upload">
+    <div class="drop" id="drop">
+      Drop a line image here, or click to pick one.
+      <div class="hint">A cropped single line of printed Urdu works best.</div>
+    </div>
+    <input type="file" id="file" accept="image/*" style="display:none" />
+
+    <div class="result" id="result">
+      <img class="preview" id="preview" alt="uploaded line" />
+      <div class="urdu" id="text"></div>
+      <div class="bar"><span id="confbar"></span></div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-review" style="display:none">
+    <div id="queue"><div class="empty">Loading the queue.</div></div>
+  </div>
+</div>
+
+<script>
+const api = "";
+
+function el(id) { return document.getElementById(id); }
+
+async function loadStats() {
+  try {
+    const response = await fetch(api + "/stats");
+    const data = await response.json();
+    const fields = [
+      ["Predictions", data.total_predictions],
+      ["Awaiting review", data.awaiting_review],
+      ["Corrections", data.corrections_collected],
+      ["Mean confidence", (data.mean_confidence || 0).toFixed(2)],
+      ["LLM calls", data.llm_calls]
+    ];
+    let html = "";
+    for (let i = 0; i < fields.length; i++) {
+      html += '<div class="stat"><div class="k">' + fields[i][0] + '</div><div class="v">' + fields[i][1] + '</div></div>';
+    }
+    el("stats").innerHTML = html;
+  } catch (error) {
+    el("stats").innerHTML = '<div class="stat"><div class="k">api</div><div class="v">offline</div></div>';
+  }
+}
+
+async function loadHealth() {
+  try {
+    const response = await fetch(api + "/healthz");
+    const data = await response.json();
+    el("variant").textContent = "model: " + (data.variant || "unknown");
+  } catch (error) {
+    el("variant").textContent = "model: offline";
+  }
+}
+
+const drop = el("drop");
+const fileInput = el("file");
+
+drop.addEventListener("click", function () { fileInput.click(); });
+drop.addEventListener("dragover", function (event) { event.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", function () { drop.classList.remove("over"); });
+drop.addEventListener("drop", function (event) {
+  event.preventDefault();
+  drop.classList.remove("over");
+  if (event.dataTransfer.files.length > 0) { send(event.dataTransfer.files[0]); }
+});
+fileInput.addEventListener("change", function () {
+  if (fileInput.files.length > 0) { send(fileInput.files[0]); }
+});
+
+async function send(file) {
+  el("preview").src = URL.createObjectURL(file);
+  el("result").classList.add("show");
+  el("text").textContent = "reading...";
+  el("meta").innerHTML = "";
+
+  const form = new FormData();
+  form.append("file", file);
+
+  const response = await fetch(api + "/ocr", { method: "POST", body: form });
+  if (!response.ok) {
+    el("text").textContent = "the request failed";
+    return;
+  }
+  const data = await response.json();
+
+  el("text").textContent = data.text;
+  const percent = Math.round(data.confidence * 100);
+  el("confbar").style.width = percent + "%";
+
+  let routeClass = "good";
+  if (data.route === "correct") { routeClass = "warn"; }
+  if (data.needs_review) { routeClass = "bad"; }
+
+  let meta = "";
+  meta += '<span class="chip ' + routeClass + '">route: ' + data.route + '</span>';
+  meta += '<span class="chip">confidence: ' + percent + '%</span>';
+  meta += '<span class="chip">llm calls: ' + data.llm_calls + '</span>';
+  meta += '<span class="chip">model: ' + data.model_variant + '</span>';
+  meta += '<span class="chip">' + data.latency_seconds.toFixed(2) + 's</span>';
+  if (data.reason) { meta += '<span class="chip">' + data.reason + '</span>'; }
+  el("meta").innerHTML = meta;
+
+  loadStats();
+}
+
+async function loadQueue() {
+  const response = await fetch(api + "/review/queue");
+  const data = await response.json();
+
+  if (data.items.length === 0) {
+    el("queue").innerHTML = '<div class="empty">Nothing is waiting. Upload a few low quality scans to fill this up.</div>';
+    return;
+  }
+
+  let html = "";
+  for (let i = 0; i < data.items.length; i++) {
+    const item = data.items[i];
+    const percent = Math.round(item.confidence * 100);
+    html += '<div class="card">';
+    html += '<img class="preview" src="/uploads/' + item.image_path + '" />';
+    html += '<div class="meta"><span class="chip bad">confidence ' + percent + '%</span>';
+    html += '<span class="chip">id ' + item.id + '</span></div>';
+    html += '<textarea id="fix-' + item.id + '">' + (item.final_text || "") + '</textarea>';
+    html += '<button class="primary" onclick="saveFix(' + item.id + ')">Save correction</button>';
+    html += '</div>';
+  }
+  el("queue").innerHTML = html;
+}
+
+async function saveFix(id) {
+  const value = el("fix-" + id).value;
+  await fetch(api + "/review/" + id, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ corrected_text: value, note: "web review" })
+  });
+  loadQueue();
+  loadStats();
+}
+
+const buttons = document.querySelectorAll(".tabs button");
+for (let i = 0; i < buttons.length; i++) {
+  buttons[i].addEventListener("click", function () {
+    for (let j = 0; j < buttons.length; j++) { buttons[j].classList.remove("active"); }
+    this.classList.add("active");
+    const tab = this.getAttribute("data-tab");
+    el("tab-upload").style.display = (tab === "upload") ? "block" : "none";
+    el("tab-review").style.display = (tab === "review") ? "block" : "none";
+    if (tab === "review") { loadQueue(); }
+  });
+}
+
+loadHealth();
+loadStats();
+setInterval(loadStats, 15000);
+</script>
+</body>
+</html>
