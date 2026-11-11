@@ -1,0 +1,20 @@
+{
+  "validator": "pandera",
+  "total_rows": 2300,
+  "failed_rows": 7,
+  "failure_rate": 0.003043478260869565,
+  "max_allowed_failure_rate": 0.05,
+  "reasons": {
+    "text_not_urdu": 7
+  },
+  "rejected_ids": [
+    308,
+    454,
+    562,
+    907,
+    1222,
+    1612,
+    1876
+  ],
+  "passed": true
+}

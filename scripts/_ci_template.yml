@@ -20,10 +20,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pyyaml "numpy>=1.26,<2.0" "pandas>=2.2,<3.0" \
-                      "pandera>=0.20" opencv-python-headless
+                      "pandera>=0.20" opencv-python-headless fonttools
+          pip install -e . --no-deps
       - name: unit tests
-        env:
-          PYTHONPATH: src
         run: pytest tests -q
 
   build:

@@ -44,6 +44,14 @@ if (Test-Path $ciTemplate) {
     Write-Host "placed .github\workflows\ci.yml"
 }
 
+$vscodeTemplate = Join-Path $projectRoot "scripts\_vscode_settings.json"
+if (Test-Path $vscodeTemplate) {
+    $vscodeDir = Join-Path $projectRoot ".vscode"
+    New-Item -ItemType Directory -Force -Path $vscodeDir | Out-Null
+    Copy-Item $vscodeTemplate (Join-Path $vscodeDir "settings.json") -Force
+    Write-Host "placed .vscode\settings.json"
+}
+
 # --- virtual environment --------------------------------------------------
 if (-not (Test-Path (Join-Path $projectRoot ".venv"))) {
     Write-Host "creating the virtual environment..." -ForegroundColor Cyan
@@ -58,6 +66,13 @@ Write-Host "upgrading pip..." -ForegroundColor Cyan
 Write-Host "installing the lean dependency set, this takes a few minutes..." -ForegroundColor Cyan
 & $venvPython -m pip install -r requirements-local.txt
 
+# Installing the project itself in editable mode is what makes
+# "python -m nastaliqops.data.synth" work from any terminal. Without it the
+# imports only resolve when PYTHONPATH happens to be set, which it is not in
+# a fresh PowerShell window, and dvc stages then fail with ModuleNotFoundError.
+Write-Host "installing the project in editable mode..." -ForegroundColor Cyan
+& $venvPython -m pip install -e . --no-deps --quiet
+
 # --- env file -------------------------------------------------------------
 if (-not (Test-Path (Join-Path $projectRoot ".env"))) {
     Copy-Item (Join-Path $projectRoot ".env.example") (Join-Path $projectRoot ".env")
@@ -66,12 +81,10 @@ if (-not (Test-Path (Join-Path $projectRoot ".env"))) {
 
 # --- tests ----------------------------------------------------------------
 Write-Host "running the test suite..." -ForegroundColor Cyan
-$env:PYTHONPATH = "src"
 & $venvPython -m pytest tests -q
 
 Write-Host ""
 Write-Host "setup finished." -ForegroundColor Green
 Write-Host "next, in this terminal:" -ForegroundColor Green
 Write-Host "  .venv\Scripts\Activate.ps1"
-Write-Host "  `$env:PYTHONPATH='src'"
 Write-Host "  dvc repro split"

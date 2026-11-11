@@ -73,7 +73,7 @@ def main():
         if record["id"] in rejected:
             continue
 
-        source_path = str(Paths.raw / "images" / record["file_name"])
+        source_path = str(Paths.raw / record.get("rel_path", "images/" + record["file_name"]))
         image = cv2.imread(source_path, cv2.IMREAD_COLOR)
         if image is None:
             continue
@@ -85,6 +85,8 @@ def main():
         new_record["id"] = record["id"]
         new_record["file_name"] = record["file_name"]
         new_record["text"] = normalise(record["text"])
+        new_record["is_real"] = record.get("is_real", False)
+        new_record["source"] = record.get("source", "unknown")
         kept.append(new_record)
 
     out_path = Paths.processed / "manifest.jsonl"

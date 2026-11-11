@@ -1,0 +1,7 @@
+{
+  "train": 1270,
+  "val": 225,
+  "golden": 400,
+  "stream": 398,
+  "golden_is_real": true
+}

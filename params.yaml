@@ -1,18 +1,45 @@
-# configs for every stage. dvc repro reads this file, and every script
-# also logs these values to mlflow so a run can be traced back to its config.
+# Configs for every stage. dvc repro reads this file, and every script also
+# logs these values to mlflow so a run can be traced back to its config.
+#
+# The dataset is a hybrid on purpose. Training data is generated locally so
+# the labels are perfect and the volume costs nothing, and the frozen golden
+# set is real scanned lines streamed from the Hub, so promotion decisions are
+# made against real-world images. Train on synthetic, evaluate on real.
+
+synth:
+  train_count: 1500          # clean lines, these become train and val
+  stream_count: 400          # degraded lines, standing in for live uploads
+  clean_severity: 0.15       # noise, blur and skew applied to the training set
+  harsh_severity: 0.75       # the stream set is deliberately worse, so the
+                             # drift monitor has something genuine to detect
+  font_sizes: [28, 34, 40, 48]
+  # Optional. Gives more natural sentence structure than the bundled
+  # vocabulary. Streamed, so it costs a few hundred kilobytes, and the
+  # generator works fine with it set to an empty string.
+  text_corpus_repo: "community-datasets/urdu_fake_news"
+  text_corpus_column: "news"
 
 data:
-  hf_dataset: "abdur75648/UTRSet-Real"
-  subset_size: 1500          # keep it small, CPU laptop + free colab. raise
-                             # it once a full run works end to end.
+  # Tried in order until enough real rows are collected. Dataset repos on the
+  # Hub get renamed, gated or emptied, so a list is more durable than one name.
+  hf_candidates:
+    - "PuristanLabs1/urdu-ocr-1M"
+    - "deepcopy/MMU-OCR-21-Urdu-TextLines"
+    - "Ali000007/Urdu-Ocr-Dataset"
+    - "Khurram123/urdu-poetry-nastaleeq-ocr"
+    - "oddadmix/qaari-0.1-ocr-urdu-news-dataset-small"
+    - "vettedlance/urdu-nastaliq-1908-eval-sample"
+  real_count: 400            # golden set size. streamed, so roughly 20 MB
+  allow_synthetic_golden: false   # fail loudly rather than fake the golden set
+
   image_height: 64
   max_width: 1024
   seed: 42
   splits:
-    train: 0.70
-    val: 0.10
-    golden: 0.10             # frozen test set, never trained on
-    stream: 0.10             # pretend live uploads, used for drift + review queue
+    train: 0.85              # share of the clean synthetic pool
+    val: 0.15
+    golden: 0.10             # only used if no real data could be fetched
+    stream: 0.10             # only used in that same fallback case
 
 model:
   base_checkpoint: "cxfajar197/urdu-ocr"
@@ -34,7 +61,7 @@ train:
 promotion:
   metric: "cer"
   max_cer: 0.30              # a challenger must be at least this good
-  min_improvement: 0.01      # and must beat champion by this much
+  min_improvement: 0.01      # and must beat the champion by this much
 
 llm:
   provider: "groq"           # groq | gemini | ollama

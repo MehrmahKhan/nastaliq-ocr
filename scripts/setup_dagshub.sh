@@ -5,8 +5,13 @@
 #
 #   bash scripts/setup_dagshub.sh
 #
-# On Windows run this from Git Bash, or just run the four dvc commands by
-# hand from PowerShell.
+# On Windows run this from Git Bash, or run the five dvc commands by hand
+# from PowerShell.
+#
+# Note the url is s3://dvc, not the https address. DagsHub exposes an S3
+# compatible endpoint, and the bucket inside it is called dvc. Giving dvc an
+# https:// url makes it treat the remote as a plain http remote, which then
+# rejects endpointurl and the credentials with "extra keys not allowed".
 
 set -e
 
@@ -25,14 +30,17 @@ if [ -z "$DAGSHUB_USER" ] || [ -z "$DAGSHUB_TOKEN" ]; then
   exit 1
 fi
 
-REMOTE_URL="https://dagshub.com/${DAGSHUB_USER}/${DAGSHUB_REPO}.s3"
+ENDPOINT="https://dagshub.com/${DAGSHUB_USER}/${DAGSHUB_REPO}.s3"
 
 if [ ! -d .dvc ]; then
   dvc init
 fi
 
-dvc remote add -d --force origin "$REMOTE_URL"
-dvc remote modify origin endpointurl "https://dagshub.com/${DAGSHUB_USER}/${DAGSHUB_REPO}.s3"
+# remove any earlier attempt so this script can be run again safely
+dvc remote remove origin 2>/dev/null || true
+
+dvc remote add -d origin s3://dvc
+dvc remote modify origin endpointurl "$ENDPOINT"
 dvc remote modify --local origin access_key_id "$DAGSHUB_TOKEN"
 dvc remote modify --local origin secret_access_key "$DAGSHUB_TOKEN"
 
@@ -40,5 +48,7 @@ echo
 echo "dvc remote configured:"
 dvc remote list
 echo
+echo "the token lives in .dvc/config.local, which git ignores"
 echo "mlflow will log to: ${MLFLOW_TRACKING_URI}"
-echo "now run: dvc repro split && dvc push"
+echo
+echo "now run: dvc repro split"

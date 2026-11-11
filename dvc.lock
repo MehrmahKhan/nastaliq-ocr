@@ -1,0 +1,162 @@
+schema: '2.0'
+stages:
+  generate:
+    cmd: python -m nastaliqops.data.synth
+    deps:
+    - path: src/nastaliqops/data/corpus.py
+      hash: md5
+      md5: 3b490cb488dbbf3059fc1c21f3717e40
+      size: 5138
+    - path: src/nastaliqops/data/fonts.py
+      hash: md5
+      md5: 74beea7eaa7d5996a4db1375afe3e6c1
+      size: 6513
+    - path: src/nastaliqops/data/synth.py
+      hash: md5
+      md5: 99c2467906a47f47ed6a109f97fe9564
+      size: 6901
+    params:
+      params.yaml:
+        data.seed: 42
+        synth:
+          train_count: 1500
+          stream_count: 400
+          clean_severity: 0.15
+          harsh_severity: 0.75
+          font_sizes:
+          - 28
+          - 34
+          - 40
+          - 48
+          text_corpus_repo: community-datasets/urdu_fake_news
+          text_corpus_column: news
+    outs:
+    - path: data/raw/synth
+      hash: md5
+      md5: 0c2e68cd52763fdc6331696e9d3af7fa.dir
+      size: 94067118
+      nfiles: 1901
+  ingest:
+    cmd: python -m nastaliqops.data.download
+    deps:
+    - path: src/nastaliqops/data/columns.py
+      hash: md5
+      md5: 151df3090416bd7a52e5a544d233a16b
+      size: 1028
+    - path: src/nastaliqops/data/download.py
+      hash: md5
+      md5: 809ffdb239a5779078621d0e0c3b8499
+      size: 6500
+    params:
+      params.yaml:
+        data.hf_candidates:
+        - PuristanLabs1/urdu-ocr-1M
+        - deepcopy/MMU-OCR-21-Urdu-TextLines
+        - Ali000007/Urdu-Ocr-Dataset
+        - Khurram123/urdu-poetry-nastaleeq-ocr
+        - oddadmix/qaari-0.1-ocr-urdu-news-dataset-small
+        - vettedlance/urdu-nastaliq-1908-eval-sample
+        data.real_count: 400
+    outs:
+    - path: data/raw/real
+      hash: md5
+      md5: 01b77eee7bfd346af07d7a8aa9e57044.dir
+      size: 6893632
+      nfiles: 401
+  merge:
+    cmd: python -m nastaliqops.data.merge
+    deps:
+    - path: data/raw/real
+      hash: md5
+      md5: 01b77eee7bfd346af07d7a8aa9e57044.dir
+      size: 6893632
+      nfiles: 401
+    - path: data/raw/synth
+      hash: md5
+      md5: 0c2e68cd52763fdc6331696e9d3af7fa.dir
+      size: 94067118
+      nfiles: 1901
+    - path: src/nastaliqops/data/merge.py
+      hash: md5
+      md5: 8a069d632d03889fbabc742628c9a61d
+      size: 1681
+    outs:
+    - path: data/raw/manifest.jsonl
+      hash: md5
+      md5: 9ef2f6c0b70355e56ae71b6fd9dc1108
+      size: 545391
+  validate:
+    cmd: python -m nastaliqops.data.validate
+    deps:
+    - path: data/raw/manifest.jsonl
+      hash: md5
+      md5: 9ef2f6c0b70355e56ae71b6fd9dc1108
+      size: 545391
+    - path: src/nastaliqops/data/schema.py
+      hash: md5
+      md5: 5e9a15b07082c4585af35674ff69520c
+      size: 3623
+    - path: src/nastaliqops/data/validate.py
+      hash: md5
+      md5: e8dc6e21b30e4a4f6ebc8a6453815474
+      size: 3547
+    outs:
+    - path: reports/data_validation.json
+      hash: md5
+      md5: 3fcd94130473ec6871d6ddc569481ed3
+      size: 316
+  preprocess:
+    cmd: python -m nastaliqops.data.preprocess
+    deps:
+    - path: data/raw/manifest.jsonl
+      hash: md5
+      md5: 9ef2f6c0b70355e56ae71b6fd9dc1108
+      size: 545391
+    - path: reports/data_validation.json
+      hash: md5
+      md5: 3fcd94130473ec6871d6ddc569481ed3
+      size: 316
+    - path: src/nastaliqops/data/preprocess.py
+      hash: md5
+      md5: aa040347d1e825805a4853b97ab6a325
+      size: 3249
+    params:
+      params.yaml:
+        data.image_height: 64
+        data.max_width: 1024
+    outs:
+    - path: data/processed
+      hash: md5
+      md5: 6db5ed87c9edd8f32ea6a96984877891.dir
+      size: 31323523
+      nfiles: 2294
+  split:
+    cmd: python -m nastaliqops.data.split
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: 6db5ed87c9edd8f32ea6a96984877891.dir
+      size: 31323523
+      nfiles: 2294
+    - path: src/nastaliqops/data/split.py
+      hash: md5
+      md5: 8626428ec590d3949351d15c2d4c4f21
+      size: 3460
+    params:
+      params.yaml:
+        data.seed: 42
+        data.splits:
+          train: 0.85
+          val: 0.15
+          golden: 0.1
+          stream: 0.1
+    outs:
+    - path: data/splits
+      hash: md5
+      md5: 32fbdb2fb608be1115ed31c179db7706.dir
+      size: 406785
+      nfiles: 4
+    - path: reports/splits.json
+      hash: md5
+      md5: 97d02c8a4ab35cb810e8c8b91e2877e3
+      size: 99

@@ -1,19 +1,41 @@
 stages:
+  generate:
+    cmd: python -m nastaliqops.data.synth
+    deps:
+      - src/nastaliqops/data/synth.py
+      - src/nastaliqops/data/corpus.py
+      - src/nastaliqops/data/fonts.py
+    params:
+      - synth
+      - data.seed
+    outs:
+      - data/raw/synth
+
   ingest:
     cmd: python -m nastaliqops.data.download
     deps:
       - src/nastaliqops/data/download.py
+      - src/nastaliqops/data/columns.py
     params:
-      - data.hf_dataset
-      - data.subset_size
-      - data.seed
+      - data.hf_candidates
+      - data.real_count
     outs:
-      - data/raw
+      - data/raw/real
+
+  merge:
+    cmd: python -m nastaliqops.data.merge
+    deps:
+      - data/raw/synth
+      - data/raw/real
+      - src/nastaliqops/data/merge.py
+    outs:
+      - data/raw/manifest.jsonl:
+          cache: false
 
   validate:
     cmd: python -m nastaliqops.data.validate
     deps:
-      - data/raw
+      - data/raw/manifest.jsonl
       - src/nastaliqops/data/validate.py
       - src/nastaliqops/data/schema.py
     outs:
@@ -23,7 +45,7 @@ stages:
   preprocess:
     cmd: python -m nastaliqops.data.preprocess
     deps:
-      - data/raw
+      - data/raw/manifest.jsonl
       - reports/data_validation.json
       - src/nastaliqops/data/preprocess.py
     params:
@@ -42,6 +64,8 @@ stages:
       - data.seed
     outs:
       - data/splits
+      - reports/splits.json:
+          cache: false
 
   train:
     cmd: python -m nastaliqops.models.train_lora

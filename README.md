@@ -136,8 +136,11 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-local.txt   # laptop: no torch, under a gigabyte
 # pip install -r requirements.txt        # colab or docker: the full set
 
+# installing the project itself is what makes the module imports resolve.
+# without it, every stage needs PYTHONPATH set in every new terminal.
+pip install -e . --no-deps
+
 cp .env.example .env     # then fill in the keys
-export PYTHONPATH=src    # windows powershell: $env:PYTHONPATH="src"
 ```
 
 On a machine short of disk space, lower `data.subset_size` in
@@ -167,6 +170,21 @@ username and token in `.env`, then:
 ```bash
 bash scripts/setup_dagshub.sh
 ```
+
+Or by hand, which is what that script runs:
+
+```bash
+dvc init
+dvc remote add -d origin s3://dvc
+dvc remote modify origin endpointurl https://dagshub.com/<user>/<repo>.s3
+dvc remote modify --local origin access_key_id <token>
+dvc remote modify --local origin secret_access_key <token>
+```
+
+The url is `s3://dvc`, not the https address. DagsHub exposes an S3
+compatible endpoint and the bucket inside it is called `dvc`. Passing an
+https url instead makes DVC treat the remote as a plain http remote, which
+then rejects `endpointurl` with "extra keys not allowed".
 
 If you would rather use AWS directly:
 

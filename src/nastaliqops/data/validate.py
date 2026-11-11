@@ -48,7 +48,7 @@ def build_frame(manifest_path):
             continue
 
         record = json.loads(line)
-        image_path = Paths.raw / "images" / record["file_name"]
+        image_path = Paths.raw / record.get("rel_path", "images/" + record["file_name"])
         width, height, readable = describe_image(image_path)
 
         if not readable:
