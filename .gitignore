@@ -24,3 +24,4 @@ Thumbs.db
 .pytest_cache/
 .dvc/tmp
 .dvc/cache
+sample.png
