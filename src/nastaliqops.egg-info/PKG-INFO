@@ -1,5 +1,0 @@
-Metadata-Version: 2.4
-Name: nastaliqops
-Version: 0.1.0
-Summary: Urdu Nastaliq OCR with an LLM correction agent and a human in the loop
-Requires-Python: >=3.10

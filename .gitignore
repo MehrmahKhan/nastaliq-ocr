@@ -25,3 +25,4 @@ Thumbs.db
 .dvc/tmp
 .dvc/cache
 sample.png
+*.egg-info/
