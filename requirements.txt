@@ -5,8 +5,12 @@
 # rather than exact pins because pinning datasets and pyarrow to old exact
 # versions makes pip build pyarrow from source on newer Pythons.
 
-torch==2.4.0
-torchvision==0.19.0
+# ranges rather than exact pins. colab's python no longer has wheels for
+# torch 2.4.0, and one unresolvable line makes pip abort the whole file,
+# so the exact pin silently took mlflow and everything else down with it.
+# a range lets colab keep its own working cuda build.
+torch>=2.4,<3
+torchvision>=0.19,<1
 transformers==4.45.2
 peft==0.13.2
 accelerate==1.0.1
