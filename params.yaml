@@ -42,7 +42,12 @@ data:
     stream: 0.10             # only used in that same fallback case
 
 model:
-  base_checkpoint: "cxfajar197/urdu-ocr"
+  # cxfajar197/urdu-ocr was the first choice but it is a gated repo on the
+  # hub and access needs manual approval from its author, which blocks any
+  # reproducible run including ci. this one is apache 2.0 and ungated, same
+  # VisionEncoderDecoder architecture, fine tuned from trocr-base-printed
+  # on printed urdu nastaliq.
+  base_checkpoint: "qandeelasim13/urdu-ocr-trocr-si26"
   max_target_length: 96
   lora:
     r: 16
