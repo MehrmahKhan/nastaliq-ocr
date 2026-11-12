@@ -59,7 +59,11 @@ model:
     target_modules: ["q_proj", "v_proj"]
 
 train:
-  epochs: 3
+  # 1 rather than 3 because colab's free gpu quota runs out and the
+  # fallback is a cpu runtime. the pipeline, the tracked run and the
+  # registered adapter are what matter here, not the error rate. raise
+  # this back to 3 for a real training run on a t4.
+  epochs: 1
   batch_size: 8
   learning_rate: 0.00005
   warmup_steps: 100
