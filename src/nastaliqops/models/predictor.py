@@ -76,10 +76,20 @@ class OcrPredictor:
 
         total_log_prob = 0.0
         counted = 0
+        sequence = output.sequences[0]
+        # scores holds one entry per generated step. the token that step
+        # produced normally sits one position further along in sequences,
+        # because of the decoder start token. that is not guaranteed: some
+        # model and transformers combinations return the two the same
+        # length, and then the last step indexes one past the end. stop
+        # rather than assume.
         for step_index in range(len(output.scores)):
+            position = step_index + 1
+            if position >= len(sequence):
+                break
             logits = output.scores[step_index][0]
             probabilities = torch.softmax(logits, dim=-1)
-            token_id = output.sequences[0][step_index + 1]
+            token_id = sequence[position]
             token_probability = float(probabilities[token_id])
             if token_probability <= 0.0:
                 token_probability = 1e-9
