@@ -64,7 +64,10 @@ train:
   # registered adapter are what matter here, not the error rate. raise
   # this back to 3 for a real training run on a t4.
   epochs: 1
-  batch_size: 8
+  # 4 rather than 8. on a t4 the validation pass runs generate() over the
+  # whole val split, which needs more memory than training does, and at 8
+  # the allocator starts failing and the run crawls to a halt.
+  batch_size: 4
   learning_rate: 0.00005
   warmup_steps: 100
   fp16: true
